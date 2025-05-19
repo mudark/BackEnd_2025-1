@@ -1,10 +1,10 @@
 package com.example.bcsd;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 
@@ -23,20 +23,30 @@ public class ArticleRepository {
         this.jdbcTemplate=new JdbcTemplate(dataSource);
     }
 
-    public void insertArticle(Article article) {
-        Timestamp timestamp=new Timestamp(System.currentTimeMillis());
-        String str="INSERT INTO article "+
-                "(id,author_id,board_id,title,content,created_date,modified_date)"+
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        this.jdbcTemplate.update(
-                str,
-                article.getID(),
-                article.getAuthor_id(),
-                article.getBoard_id(),
-                article.getTitle(),
-                article.getContent(),
-                timestamp,
-                timestamp);
+    public Integer insertArticle(Article article) {
+        Integer id= article.getID();
+        Boolean isPosted=false;
+        while(isPosted==false) {
+            try {
+                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                String str = "INSERT INTO article " +
+                        "(id,author_id,board_id,title,content,created_date,modified_date)" +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                this.jdbcTemplate.update(
+                        str,
+                        id,
+                        article.getAuthor_id(),
+                        article.getBoard_id(),
+                        article.getTitle(),
+                        article.getContent(),
+                        timestamp,
+                        timestamp);
+                isPosted=true;
+            } catch (DataIntegrityViolationException e) {
+                id++;
+            }
+        }
+        return id;
     }
 
     public void updateArticle(Article article) {
@@ -45,7 +55,7 @@ public class ArticleRepository {
                 "board_id=?, "+
                 "title=?, "+
                 "content=?, "+
-                "modified_time=? "+
+                "modified_date=? "+
                 "WHERE id=?";
         this.jdbcTemplate.update(
                 str,
@@ -77,8 +87,8 @@ public class ArticleRepository {
                     public Article mapRow(ResultSet rs, int rowNum) throws SQLException {
                         Article article=new Article(
                                 rs.getInt("id"),
-                                rs.getInt("board_id"),
                                 rs.getInt("author_id"),
+                                rs.getInt("board_id"),
                                 rs.getString("title"),
                                 rs.getString("content"),
                                 rs.getTimestamp("created_date"),
@@ -119,8 +129,8 @@ public class ArticleRepository {
                     public Article mapRow(ResultSet rs, int rowNum) throws SQLException {
                         Article article=new Article(
                                 rs.getInt("id"),
-                                rs.getInt("board_id"),
                                 rs.getInt("author_id"),
+                                rs.getInt("board_id"),
                                 rs.getString("title"),
                                 rs.getString("content"),
                                 rs.getTimestamp("created_date"),
@@ -129,7 +139,30 @@ public class ArticleRepository {
                         return article;
                     }
                 }
-        );
+                );
+        return articleList;
+    }
+
+    public List<Article> getBoardArticles(Integer board_id)
+    {
+        List<Article> articleList=this.jdbcTemplate.query(
+                "SELECT * FROM article WHERE board_id=?",
+                new RowMapper<Article>() {
+                    @Override
+                    public Article mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        Article article=new Article(
+                                rs.getInt("id"),
+                                rs.getInt("author_id"),
+                                rs.getInt("board_id"),
+                                rs.getString("title"),
+                                rs.getString("content"),
+                                rs.getTimestamp("created_date"),
+                                rs.getTimestamp("modified_date")
+                        );
+                        return article;
+                    }
+                }
+        ,board_id);
         return articleList;
     }
 

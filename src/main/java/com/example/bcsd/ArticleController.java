@@ -2,6 +2,7 @@ package com.example.bcsd;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -50,13 +51,15 @@ public class ArticleController {
     @GetMapping("/articles")
     public ResponseEntity getAllArticles()
     {
-        return new ResponseEntity(articleService.getAllArticles(),null,HttpStatus.OK);
+        return new ResponseEntity(articleService.getAllArticles(null),null,HttpStatus.OK);
     }
 
     @GetMapping("/posts")
-    public ModelAndView getAllPosts()
+    public ModelAndView getAllPosts(@RequestParam(
+            name="boardId",required=false)
+                                        String boardId)
     {
-        return this.articleService.getPosts();
+        return this.articleService.getPosts(boardId);
     }
 
     @GetMapping("/user/{id}")

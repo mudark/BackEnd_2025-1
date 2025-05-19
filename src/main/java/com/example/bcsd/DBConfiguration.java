@@ -21,8 +21,12 @@ public class DBConfiguration {
     @ConfigurationProperties(prefix="spring.datasource")
     public HikariDataSource getDataSource() {
 
-        return DataSourceBuilder.create()
+        this.driveClassName="com.mysql.cj.jdbc.Driver";
+        this.username="root";
+        this.password="mudark0204;";
+        this.url="jdbc:mysql://localhost:3306/bcsd?serverTimezone=Asia/Seoul";
 
+        return DataSourceBuilder.create()
                 .driverClassName(this.driveClassName)
                 .url(this.url)
                 .username(this.username)
