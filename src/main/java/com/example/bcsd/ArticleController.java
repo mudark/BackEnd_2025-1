@@ -2,7 +2,6 @@ package com.example.bcsd;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -21,37 +20,40 @@ public class ArticleController {
     @GetMapping("/articles/{id}")
     public ResponseEntity getArticle(@PathVariable("id") String id)
     {
-        return new ResponseEntity(articleService.getArticle(id),null,HttpStatus.OK);
+        ArticleDTO articleDTO;
+            articleDTO=articleService.getArticle(id);
+        if(articleDTO==null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity(articleDTO,null,HttpStatus.OK);
     }
 
     @PostMapping("/articles")
     public ResponseEntity postArticle(@RequestBody HashMap map)
     {
-        articleService.postArticle(map);
-
-        return new ResponseEntity(HttpStatus.OK);
+        HttpStatus httpStatus;
+        httpStatus = articleService.postArticle(map);
+        return new ResponseEntity(httpStatus);
     }
 
     @PutMapping("/articles/{id}")
     public ResponseEntity putArticle(@PathVariable("id") String id,@RequestBody HashMap map)
     {
-        articleService.putArticle(id,map);
-
-        return new ResponseEntity(HttpStatus.OK);
+        HttpStatus httpStatus=articleService.putArticle(id,map);
+        return new ResponseEntity(httpStatus);
     }
 
     @DeleteMapping("/articles/{id}")
     public ResponseEntity deleteArticle(@PathVariable("id") String id)
     {
-        articleService.deleteArticle(id);
-
-        return new ResponseEntity(HttpStatus.OK);
+        HttpStatus httpStatus=articleService.deleteArticle(id);
+        return new ResponseEntity(httpStatus);
     }
 
     @GetMapping("/articles")
     public ResponseEntity getAllArticles()
     {
-        return new ResponseEntity(articleService.getAllArticles(null),null,HttpStatus.OK);
+        return new ResponseEntity(articleService.getArticles(null),null,HttpStatus.OK);
     }
 
     @GetMapping("/posts")
@@ -65,22 +67,54 @@ public class ArticleController {
     @GetMapping("/user/{id}")
     public ResponseEntity getUser(@PathVariable("id") String id)
     {
-        return new ResponseEntity<>(articleService.getUser(id),null,HttpStatus.OK);
+        User user=articleService.getUser(id);
+        if(user==null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(user,null,HttpStatus.OK);
     }
 
     @PostMapping("/user/{id}")
     public ResponseEntity postUser(@PathVariable("id") String id, @RequestBody HashMap map)
     {
-        this.articleService.postUser(id,map);
-
-        return new ResponseEntity<>(HttpStatus.OK);
+        HttpStatus httpStatus=this.articleService.postUser(id,map);
+        return new ResponseEntity<>(httpStatus);
+    }
+    @PutMapping("/user/{id}")
+    public ResponseEntity putUser(@PathVariable("id") String id, @RequestBody HashMap map)
+    {
+        HttpStatus httpStatus=this.articleService.putUser(id,map);
+        return new ResponseEntity<>(httpStatus);
     }
 
     @DeleteMapping("/user/{id}")
-    public ResponseEntity postUser(@PathVariable("id") String id)
+    public ResponseEntity deleteUser(@PathVariable("id") String id)
     {
-        this.articleService.deleteUser(id);
+        HttpStatus httpStatus=this.articleService.deleteUser(id);
+        return new ResponseEntity<>(httpStatus);
+    }
 
-        return new ResponseEntity<>(HttpStatus.OK);
+    @GetMapping("/board/{id}")
+    public ResponseEntity getBoard(@PathVariable("id") String id)
+    {
+        String board=articleService.getBoard(id);
+        if(board==null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(board,null,HttpStatus.OK);
+    }
+
+    @PostMapping("/Board")
+    public ResponseEntity postBoard(@RequestBody HashMap map)
+    {
+        HttpStatus httpStatus=this.articleService.postBoard(map);
+        return new ResponseEntity<>(httpStatus);
+    }
+
+    @DeleteMapping("/board/{id}")
+    public ResponseEntity deleteBoard(@PathVariable("id") String id)
+    {
+        HttpStatus httpStatus=this.articleService.deleteBoard(id);
+        return new ResponseEntity<>(httpStatus);
     }
 }

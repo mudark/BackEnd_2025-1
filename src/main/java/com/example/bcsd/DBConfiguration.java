@@ -23,7 +23,7 @@ public class DBConfiguration {
 
         this.driveClassName="com.mysql.cj.jdbc.Driver";
         this.username="root";
-        this.password="mudark0204;";
+        this.password="";
         this.url="jdbc:mysql://localhost:3306/bcsd?serverTimezone=Asia/Seoul";
 
         return DataSourceBuilder.create()
