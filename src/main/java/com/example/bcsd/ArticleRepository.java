@@ -1,6 +1,6 @@
 package com.example.bcsd;
 
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -9,7 +9,6 @@ import javax.sql.DataSource;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -24,32 +23,24 @@ public class ArticleRepository {
     }
 
     public Integer insertArticle(Article article) {
-        Integer id= article.getID();
-        Boolean isPosted=false;
-        while(isPosted==false) {
-            try {
-                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-                String str = "INSERT INTO article " +
-                        "(id,author_id,board_id,title,content,created_date,modified_date)" +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?)";
-                this.jdbcTemplate.update(
-                        str,
-                        id,
-                        article.getAuthor_id(),
-                        article.getBoard_id(),
-                        article.getTitle(),
-                        article.getContent(),
-                        timestamp,
-                        timestamp);
-                isPosted=true;
-            } catch (DataIntegrityViolationException e) {
-                id++;
-            }
-        }
-        return id;
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        String str = "INSERT INTO article " +
+                "(id,author_id,board_id,title,content,created_date,modified_date)" +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        this.jdbcTemplate.update(
+                str,
+                article.getID(),
+                article.getAuthor_id(),
+                article.getBoard_id(),
+                article.getTitle(),
+                article.getContent(),
+                timestamp,
+                timestamp);
+
+        return 0;
     }
 
-    public void updateArticle(Article article) throws SQLIntegrityConstraintViolationException {
+    public void updateArticle(Article article){
         String sql="UPDATE article SET "+
                 "author_id=?, "+
                 "board_id=?, "+
@@ -79,6 +70,9 @@ public class ArticleRepository {
     }
 
     public void updateUser(User user) {
+        if(this.getUser("email", user.getEmail()).size()!=0){
+            throw(new CustomException(HttpStatus.CONFLICT,"Email은 중복할 수 없습니다."));
+        }
         String sql="UPDATE member SET "+
                 "name=?, "+
                 "email=?, "+
@@ -93,7 +87,7 @@ public class ArticleRepository {
         );
     }
 
-    public Article getArticle(Integer id) {
+    public Article getArticle(Integer id,HttpStatus httpStatus) {
         List<Article> articleList=this.jdbcTemplate.query(
                 "SELECT * FROM article WHERE id=?",
                 new RowMapper<Article>() {
@@ -104,12 +98,12 @@ public class ArticleRepository {
                 }
         ,id);
         if(articleList.size()==0){
-            return null;
+            throw new CustomException(httpStatus,"존재하지 않는 게시글입니다.");
         }
         return  articleList.get(0);
     }
 
-    public User getUser(Integer id) {
+    public User getUser(Integer id, HttpStatus httpStatus) {
         List<User> userList=this.jdbcTemplate.query(
                 "SELECT * FROM member WHERE id=?",
                 new RowMapper<User>() {
@@ -121,7 +115,7 @@ public class ArticleRepository {
                 }
         ,id);
         if(userList.size()==0){
-            return null;
+            throw new CustomException(httpStatus,"존재하지 않는 유저입니다.");
         }
         return userList.get(0);
     }
@@ -165,10 +159,11 @@ public class ArticleRepository {
                     }
                 }
         ,field_id);
+
         return articleList;
     }
 
-    public String getBoard(Integer id) {
+    public String getBoard(Integer id, HttpStatus httpStatus) {
         List<String> nameList=this.jdbcTemplate.query(
                 "SELECT name FROM board WHERE id=?",
                 new RowMapper<String>() {
@@ -179,7 +174,7 @@ public class ArticleRepository {
                 }
         ,id);
         if(nameList.size()==0){
-            return null;
+            throw new CustomException(httpStatus,"존재하지 않는 게시판입니다.");
         }
         return nameList.get(0);
     }
@@ -224,6 +219,6 @@ public class ArticleRepository {
                 rs.getInt("id"),
                 rs.getString("name"),
                 rs.getString("email"),
-                rs.getString("password"));
+                null);
     }
 }

@@ -1,45 +1,44 @@
 package com.example.bcsd;
 
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-
-import java.util.HashMap;
 
 @RestController
 public class ArticleController {
 
     ArticleService articleService;
 
-    public ArticleController()
+    @Autowired
+    public ArticleController(ArticleService articleService)
     {
-        this.articleService=new ArticleService();
+        this.articleService=articleService;
     }
 
     @GetMapping("/articles/{id}")
     public ResponseEntity getArticle(@PathVariable("id") String id)
     {
         ArticleDTO articleDTO;
-            articleDTO=articleService.getArticle(id);
-        if(articleDTO==null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        articleDTO=articleService.getArticle(id);
         return new ResponseEntity(articleDTO,null,HttpStatus.OK);
     }
 
     @PostMapping("/articles")
-    public ResponseEntity postArticle(@RequestBody HashMap map)
+    public ResponseEntity postArticle(@Valid @RequestBody ArticleReqeustDTO articleReqeustDTO)
     {
         HttpStatus httpStatus;
-        httpStatus = articleService.postArticle(map);
+        httpStatus = articleService.postArticle(articleReqeustDTO);
         return new ResponseEntity(httpStatus);
     }
 
     @PutMapping("/articles/{id}")
-    public ResponseEntity putArticle(@PathVariable("id") String id,@RequestBody HashMap map)
+    public ResponseEntity putArticle(@PathVariable("id") String id,
+                                     @Valid @RequestBody ArticleReqeustDTO articleReqeustDTO)
     {
-        HttpStatus httpStatus=articleService.putArticle(id,map);
+        HttpStatus httpStatus=articleService.putArticle(id, articleReqeustDTO);
         return new ResponseEntity(httpStatus);
     }
 
@@ -57,9 +56,7 @@ public class ArticleController {
     }
 
     @GetMapping("/posts")
-    public ModelAndView getAllPosts(@RequestParam(
-            name="boardId",required=false)
-                                        String boardId)
+    public ModelAndView getAllPosts(@RequestParam(name="boardId",required=false) String boardId)
     {
         return this.articleService.getPosts(boardId);
     }
@@ -68,22 +65,21 @@ public class ArticleController {
     public ResponseEntity getUser(@PathVariable("id") String id)
     {
         User user=articleService.getUser(id);
-        if(user==null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
         return new ResponseEntity<>(user,null,HttpStatus.OK);
     }
 
     @PostMapping("/user/{id}")
-    public ResponseEntity postUser(@PathVariable("id") String id, @RequestBody HashMap map)
+    public ResponseEntity postUser(@PathVariable("id") String id,
+                                   @Valid @RequestBody UserRequestDTO userRequestDTO)
     {
-        HttpStatus httpStatus=this.articleService.postUser(id,map);
+        HttpStatus httpStatus=this.articleService.postUser(id,userRequestDTO);
         return new ResponseEntity<>(httpStatus);
     }
     @PutMapping("/user/{id}")
-    public ResponseEntity putUser(@PathVariable("id") String id, @RequestBody HashMap map)
+    public ResponseEntity putUser(@PathVariable("id") String id,
+                                  @Valid @RequestBody UserRequestDTO userRequestDTO)
     {
-        HttpStatus httpStatus=this.articleService.putUser(id,map);
+        HttpStatus httpStatus=this.articleService.putUser(id,userRequestDTO);
         return new ResponseEntity<>(httpStatus);
     }
 
@@ -98,16 +94,13 @@ public class ArticleController {
     public ResponseEntity getBoard(@PathVariable("id") String id)
     {
         String board=articleService.getBoard(id);
-        if(board==null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
         return new ResponseEntity<>(board,null,HttpStatus.OK);
     }
 
-    @PostMapping("/Board")
-    public ResponseEntity postBoard(@RequestBody HashMap map)
+    @PostMapping("/board/{id}")
+    public ResponseEntity postBoard(@PathVariable("id") String id,@Valid @RequestBody BoardDTO boardDTO)
     {
-        HttpStatus httpStatus=this.articleService.postBoard(map);
+        HttpStatus httpStatus=this.articleService.postBoard(id,boardDTO);
         return new ResponseEntity<>(httpStatus);
     }
 
