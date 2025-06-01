@@ -1,17 +1,37 @@
 package com.example.bcsd;
 
+import jakarta.persistence.*;
+
 import java.sql.Timestamp;
 
+@Entity
+@Table(name="article")
 public class Article {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="id")
     private Integer id;
+
+    @Column(name="author_id")
     private Integer author_id;
+
+    @Column(name="board_id")
     private Integer board_id;
+
+    @Column(name="title")
     private String title;
+
+    @Column(name="content")
     private String content;
+    //@Temporal
+    @Column(name="created_date")
     private Timestamp createdDate;
+
+    @Column(name="modified_date")
     private Timestamp modifiedDate;
 
+    public Article() {}
 
     public Article(
             Integer id,

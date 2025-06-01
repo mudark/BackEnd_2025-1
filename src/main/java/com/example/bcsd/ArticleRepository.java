@@ -1,224 +1,112 @@
 package com.example.bcsd;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.DataSource;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.List;
 
 @Repository
 public class ArticleRepository {
 
-    private JdbcTemplate jdbcTemplate;
+    @PersistenceContext
+    private EntityManager entityManager;
 
+    @Autowired
     public ArticleRepository() {
-        DataSource dataSource = new DBConfiguration().getDataSource();
-        this.jdbcTemplate=new JdbcTemplate(dataSource);
+        //this.entityManager=entityManagerFactory.createEntityManager();
     }
 
     public Integer insertArticle(Article article) {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String str = "INSERT INTO article " +
-                "(id,author_id,board_id,title,content,created_date,modified_date)" +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        this.jdbcTemplate.update(
-                str,
-                article.getID(),
-                article.getAuthor_id(),
-                article.getBoard_id(),
-                article.getTitle(),
-                article.getContent(),
-                timestamp,
-                timestamp);
-
+        this.entityManager.persist(article);
         return 0;
     }
 
     public void updateArticle(Article article){
-        String sql="UPDATE article SET "+
-                "author_id=?, "+
-                "board_id=?, "+
-                "title=?, "+
-                "content=?, "+
-                "modified_date=? "+
-                "WHERE id=?";
-        this.jdbcTemplate.update(
-                sql,
-                article.getAuthor_id(),
-                article.getBoard_id(),
-                article.getTitle(),
-                article.getContent(),
-                new Timestamp(System.currentTimeMillis()),
-                article.getID());
+        this.entityManager.merge(article);
     }
 
     public void insertUser(User user) {
-        String sql="INSERT INTO Member(id,name,email,password) VALUES (?,?,?,?)";
-        this.jdbcTemplate.update(
-                sql,
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getPassword()
-        );
+        this.entityManager.persist(user);
     }
 
     public void updateUser(User user) {
-        if(this.getUser("email", user.getEmail()).size()!=0){
-            throw(new CustomException(HttpStatus.CONFLICT,"Email은 중복할 수 없습니다."));
-        }
-        String sql="UPDATE member SET "+
-                "name=?, "+
-                "email=?, "+
-                "password=? "+
-                "WHERE id=?";
-        this.jdbcTemplate.update(
-                sql,
-                user.getName(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getId()
-        );
+        this.entityManager.merge(user);
     }
 
     public Article getArticle(Integer id,HttpStatus httpStatus) {
-        List<Article> articleList=this.jdbcTemplate.query(
-                "SELECT * FROM article WHERE id=?",
-                new RowMapper<Article>() {
-                    @Override
-                    public Article mapRow(ResultSet rs, int rowNum) throws SQLException {
-                         return getArticleFrom(rs);
-                    }
-                }
-        ,id);
-        if(articleList.size()==0){
+        Article article=this.entityManager.find(Article.class, id);
+        if(article==null){
             throw new CustomException(httpStatus,"존재하지 않는 게시글입니다.");
         }
-        return  articleList.get(0);
+        return  article;
     }
 
     public User getUser(Integer id, HttpStatus httpStatus) {
-        List<User> userList=this.jdbcTemplate.query(
-                "SELECT * FROM member WHERE id=?",
-                new RowMapper<User>() {
-                    @Override
-                    public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        User user=getUserFrom(rs);
-                        return user;
-                    }
-                }
-        ,id);
-        if(userList.size()==0){
+        User user=this.entityManager.find(User.class, id);
+        if(user==null){
             throw new CustomException(httpStatus,"존재하지 않는 유저입니다.");
         }
-        return userList.get(0);
+        return user;
     }
-    public List<User> getUser(String field, String str) {
-        List<User> userList=this.jdbcTemplate.query(
-                "SELECT * FROM member WHERE "+field+"=?",
-                new RowMapper<User>() {
-                    @Override
-                    public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        User user=getUserFrom(rs);
-                        return user;
-                    }
-                }
-                ,str);
-        return userList;
+    public User getUser(String field, String data) {
+
+        String sql="SELECT u FROM User u WHERE "+field+"= :data";
+        List<User> userList=this.entityManager
+                .createQuery(sql,User.class)
+                .setParameter("data",data)
+                .getResultList();
+        if(userList.size()==0){
+            return null;
+        }
+        return userList.get(0);
     }
 
     public List<Article> getAllArticles()
     {
-        List<Article> articleList=this.jdbcTemplate.query(
-                "SELECT * FROM article",
-                new RowMapper<Article>() {
-                    @Override
-                    public Article mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        Article article=getArticleFrom(rs);
-                        return article;
-                    }
-                }
-                );
+        String sql="SELECT a FROM Article a";
+        List<Article> articleList=this.entityManager
+                .createQuery(sql,Article.class)
+                .getResultList();
         return articleList;
     }
 
     public List<Article> getArticles(String field, Integer field_id)
     {
-        List<Article> articleList=this.jdbcTemplate.query(
-                "SELECT * FROM article WHERE "+field+"=?",
-                new RowMapper<Article>() {
-                    @Override
-                    public Article mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        return  getArticleFrom(rs);
-                    }
-                }
-        ,field_id);
-
+        String sql="SELECT a FROM Article a WHERE "+field+"= :field_id";
+        List<Article> articleList=this.entityManager
+                .createQuery(sql,Article.class)
+                .setParameter("field_id",field_id)
+                .getResultList();
         return articleList;
     }
 
-    public String getBoard(Integer id, HttpStatus httpStatus) {
-        List<String> nameList=this.jdbcTemplate.query(
-                "SELECT name FROM board WHERE id=?",
-                new RowMapper<String>() {
-                    @Override
-                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        return new String(rs.getString("name"));
-                    }
-                }
-        ,id);
-        if(nameList.size()==0){
+    public Board getBoard(Integer id, HttpStatus httpStatus) {
+        Board board=this.entityManager.find(Board.class,id);
+        if(board==null){
             throw new CustomException(httpStatus,"존재하지 않는 게시판입니다.");
         }
-        return nameList.get(0);
+        return board;
     }
 
-    public void postBoard(Integer id, String name) {
-        String sql="INSERT INTO board(id,name) VALUES (?,?)";
-        this.jdbcTemplate.update(
-                sql,
-                id,
-                name
-        );
+    public void postBoard(Board board) {
+        this.entityManager.persist(board);
     }
 
     public void deleteBoard(Integer id) {
-        String sql="DELETE FROM board where id=?";
-        this.jdbcTemplate.update(sql,id);
+        Board board=this.entityManager.find(Board.class,id);
+        this.entityManager.remove(board);
     }
 
     public void deleteArticle(Integer id) {
-        String sql="DELETE FROM article where id=?";
-        this.jdbcTemplate.update(sql,id);
+        Article article=this.entityManager.find(Article.class, id);
+        this.entityManager.remove(article);
     }
 
     public void deleteUser(Integer id) {
-        String str="DELETE FROM member where id=?";
-        this.jdbcTemplate.update(str,id);
-    }
-
-    private Article getArticleFrom(ResultSet rs) throws SQLException {
-        return new Article(
-                rs.getInt("id"),
-                rs.getInt("author_id"),
-                rs.getInt("board_id"),
-                rs.getString("title"),
-                rs.getString("content"),
-                rs.getTimestamp("created_date"),
-                rs.getTimestamp("modified_date")
-        );
-    }
-    private User getUserFrom(ResultSet rs) throws SQLException {
-        return new User(
-                rs.getInt("id"),
-                rs.getString("name"),
-                rs.getString("email"),
-                null);
+        User user=this.entityManager.find(User.class, id);
+        this.entityManager.remove(user);
     }
 }

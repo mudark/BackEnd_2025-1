@@ -19,7 +19,7 @@ public class ArticleService {
         this.articleRepository=articleRepository;
     }
     @Transactional(readOnly = true)
-    public ArticleDTO getArticle(String id)
+    public ArticleResponseDTO getArticle(String id)
     {
         Article article=this.articleRepository.getArticle(Integer.parseInt(id),HttpStatus.NOT_FOUND);
         return this.turnToArticleDTO(article);
@@ -42,7 +42,10 @@ public class ArticleService {
     public HttpStatus putArticle(String id_str, ArticleReqeustDTO articleReqeustDTO)
     {
         Integer id=Integer.parseInt(id_str);
-        Article article=this.turnToArticle(id, null, articleReqeustDTO);
+        Timestamp createdDatetime=this.articleRepository
+                .getArticle(id,HttpStatus.BAD_REQUEST)
+                .getCreatedDate();
+        Article article=this.turnToArticle(id,createdDatetime, articleReqeustDTO);
         this.articleRepository.getUser(article.getAuthor_id(),HttpStatus.BAD_REQUEST);
         this.articleRepository.getBoard(article.getBoard_id(),HttpStatus.BAD_REQUEST);
         this.articleRepository.updateArticle(article);
@@ -57,14 +60,14 @@ public class ArticleService {
     }
 
     @Transactional(readOnly = true)
-    public List<ArticleDTO> getArticles(String board_id) {
+    public List<ArticleResponseDTO> getArticles(String board_id) {
         List<Article> articleList;
         try {
             articleList = articleRepository.getArticles("board_id",Integer.parseInt(board_id));
         } catch(NumberFormatException e) {
             articleList = articleRepository.getAllArticles();
         }
-        List<ArticleDTO> articleDTOList=new ArrayList<ArticleDTO>();
+        List<ArticleResponseDTO> articleDTOList=new ArrayList<ArticleResponseDTO>();
 
         for(int i=0;i<articleList.size();i++) {
             articleDTOList.add(this.turnToArticleDTO(articleList.get(i)));
@@ -79,19 +82,21 @@ public class ArticleService {
         ModelAndView modelAndView=new ModelAndView();
         String boardName="전체";
         if(board_id!=null){
-            boardName=this.articleRepository.getBoard(Integer.parseInt(board_id),HttpStatus.NOT_FOUND);
+            boardName=this.articleRepository
+                    .getBoard(Integer.parseInt(board_id),HttpStatus.NOT_FOUND)
+                    .getName();
         }
         StringBuilder articlePosts=new StringBuilder(boardName+" 게시판");
-        List<ArticleDTO> articleDTOList=this.getArticles(board_id);
+        List<ArticleResponseDTO> articleResponseDTOList=this.getArticles(board_id);
 
-        for(int i=0;i<articleDTOList.size();i++) {
-            ArticleDTO articleDTO=articleDTOList.get(i);
-            articlePosts.append("<br><br><h1>"+articleDTO.get("title")+"</h1><br>"+
-                    articleDTO.get("author")+"<br>작성일시 : "+
-                    articleDTO.get("createddate")+"<br>수정일시 : "+
-                    articleDTO.get("modifieddate")+"<br>게시판 : "+
-                    articleDTO.get("board")+"<br>"+
-                    articleDTO.get("content"));
+        for(int i=0;i<articleResponseDTOList.size();i++) {
+            ArticleResponseDTO articleDTO=articleResponseDTOList.get(i);
+            articlePosts.append("<br><br><h1>"+articleDTO.getTitle()+"</h1><br>"+
+                    articleDTO.getAuthor()+"<br>작성일시 : "+
+                    articleDTO.getCreatedDate()+"<br>수정일시 : "+
+                    articleDTO.getModifiedDate()+"<br>게시판 : "+
+                    articleDTO.getBoard()+"<br>"+
+                    articleDTO.getContent());
         }
         modelAndView.setViewName("posts");
         modelAndView.addObject("articlePosts",articlePosts.toString());
@@ -110,6 +115,9 @@ public class ArticleService {
     public HttpStatus postUser(String id,UserRequestDTO userRequestDTO)
     {
         User user=this.turnToUser(id,userRequestDTO);
+        if(this.articleRepository.getUser("email",user.getEmail())!=null){
+            throw(new CustomException(HttpStatus.CONFLICT,"중복되는 이메일입니다."));
+        }
         this.articleRepository.insertUser(user);
         return HttpStatus.OK;
     }
@@ -117,7 +125,7 @@ public class ArticleService {
     @Transactional
     public HttpStatus putUser(String id,UserRequestDTO userRequestDTO) {
         User user=this.turnToUser(id,userRequestDTO);
-        if(this.articleRepository.getUser("email",user.getEmail()).size()==0){
+        if(this.articleRepository.getUser("email",user.getEmail())!=null){
             throw(new CustomException(HttpStatus.CONFLICT,"중복되는 이메일입니다."));
         }
         this.articleRepository.updateUser(user);
@@ -150,14 +158,18 @@ public class ArticleService {
     }
 
     @Transactional
-    public String getBoard(String id_str) {
+    public BoardResponseDTO getBoard(String id_str) {
         Integer id=Integer.parseInt(id_str);
-        return this.articleRepository.getBoard(id,HttpStatus.NOT_FOUND);
+        String name=this.articleRepository
+                .getBoard(id,HttpStatus.NOT_FOUND)
+                .getName();
+        return new BoardResponseDTO(name);
     }
 
     @Transactional
-    public HttpStatus postBoard(String id,BoardDTO boardDTO) {
-        this.articleRepository.postBoard(Integer.parseInt(id),boardDTO.getName());
+    public HttpStatus postBoard(String id,BoardRequestDTO boardDTO) {
+        this.articleRepository
+                .postBoard(new Board(Integer.parseInt(id), boardDTO.getName()));
         return HttpStatus.OK;
     }
 
@@ -174,12 +186,16 @@ public class ArticleService {
                 new Timestamp(System.currentTimeMillis()));
     }
 
-    private ArticleDTO turnToArticleDTO(Article article)
+    private ArticleResponseDTO turnToArticleDTO(Article article)
     {
-        String author=this.articleRepository.getUser(article.getAuthor_id(),HttpStatus.BAD_REQUEST).getName();
-        String board=this.articleRepository.getBoard(article.getBoard_id(),HttpStatus.BAD_REQUEST);
+        String author=this.articleRepository
+                .getUser(article.getAuthor_id(),HttpStatus.BAD_REQUEST)
+                .getName();
+        String board=this.articleRepository
+                .getBoard(article.getBoard_id(),HttpStatus.BAD_REQUEST)
+                .getName();
 
-        return new ArticleDTO(author,board, article.getTitle(),article.getContent(),
+        return new ArticleResponseDTO(author,board, article.getTitle(),article.getContent(),
                 article.getCreatedDate().toString(),article.getModifiedDate().toString());
     }
     private User turnToUser(String id,UserRequestDTO userRequestDTO)

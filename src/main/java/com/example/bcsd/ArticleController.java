@@ -21,7 +21,7 @@ public class ArticleController {
     @GetMapping("/articles/{id}")
     public ResponseEntity getArticle(@PathVariable("id") String id)
     {
-        ArticleDTO articleDTO;
+        ArticleResponseDTO articleDTO;
         articleDTO=articleService.getArticle(id);
         return new ResponseEntity(articleDTO,null,HttpStatus.OK);
     }
@@ -93,14 +93,14 @@ public class ArticleController {
     @GetMapping("/board/{id}")
     public ResponseEntity getBoard(@PathVariable("id") String id)
     {
-        String board=articleService.getBoard(id);
-        return new ResponseEntity<>(board,null,HttpStatus.OK);
+        BoardResponseDTO boardResponseDTO=articleService.getBoard(id);
+        return new ResponseEntity<>(boardResponseDTO,null,HttpStatus.OK);
     }
 
     @PostMapping("/board/{id}")
-    public ResponseEntity postBoard(@PathVariable("id") String id,@Valid @RequestBody BoardDTO boardDTO)
+    public ResponseEntity postBoard(@PathVariable("id") String id,@Valid @RequestBody BoardRequestDTO boardRequestDTO)
     {
-        HttpStatus httpStatus=this.articleService.postBoard(id,boardDTO);
+        HttpStatus httpStatus=this.articleService.postBoard(id,boardRequestDTO);
         return new ResponseEntity<>(httpStatus);
     }
 
