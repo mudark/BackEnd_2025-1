@@ -24,21 +24,6 @@ public class GrobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(builder.toString());
     }
 
-    @ExceptionHandler(NumberFormatException.class)
-    public ResponseEntity handlerNumberFormatException(NumberFormatException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity handlerDataIntegrityViolationException(DataIntegrityViolationException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
-
-    @ExceptionHandler(IndexOutOfBoundsException.class)
-    public ResponseEntity handlerIndexOutOfBoundsException(IndexOutOfBoundsException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    }
-
     @ExceptionHandler(CustomException.class)
     public ResponseEntity handlerCustomException(CustomException e) {
         return ResponseEntity.status(e.getHttpStatus()).body(e.getMessage());

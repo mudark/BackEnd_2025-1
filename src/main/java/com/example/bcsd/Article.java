@@ -13,11 +13,13 @@ public class Article {
     @Column(name="id")
     private Integer id;
 
-    @Column(name="author_id")
-    private Integer author_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="author_id", nullable = false)
+    private User author;
 
-    @Column(name="board_id")
-    private Integer board_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="board_id", nullable = false)
+    private Board board;
 
     @Column(name="title")
     private String title;
@@ -35,28 +37,53 @@ public class Article {
 
     public Article(
             Integer id,
-            Integer author_id,
-            Integer board_id,
+            User author,
+            Board board,
             String title,
             String content,
             Timestamp createdDate,
             Timestamp modifiedDate)
     {
         this.id=id;
-        this.author_id=author_id;
-        this.board_id=board_id;
+        this.author=author;
+        this.board=board;
         this.title=title;
         this.content=content;
         this.createdDate=createdDate;
         this.modifiedDate=modifiedDate;
+        //this.board.add(this);
+        //this.author.add(this);
     }
     public Integer getID() {return this.id;}
-    public Integer getAuthor_id() {return this.author_id;}
-    public Integer getBoard_id() {return this.board_id;}
+    public User getAuthor() {return this.author;}
+
+    public void setAuthor(User author) {
+        this.author = author;
+    }
+
+    public Board getBoard() {return this.board;}
+
+    public void setBoard(Board board) {
+        this.board = board;
+    }
+
     public String getTitle() {return this.title;}
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getContent() {return this.content;}
+
+    public void setContent(String content) {
+        this.content = content;
+    }
 
     public Timestamp getCreatedDate() {return this.createdDate;}
 
     public Timestamp getModifiedDate() {return this.modifiedDate;}
+
+    public void setModifiedDate(Timestamp modifiedDate) {
+        this.modifiedDate = modifiedDate;
+    }
 }

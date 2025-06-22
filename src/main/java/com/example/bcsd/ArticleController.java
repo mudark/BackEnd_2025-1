@@ -10,7 +10,7 @@ import org.springframework.web.servlet.ModelAndView;
 @RestController
 public class ArticleController {
 
-    ArticleService articleService;
+    private final ArticleService articleService;
 
     @Autowired
     public ArticleController(ArticleService articleService)

@@ -3,14 +3,17 @@ package com.example.bcsd;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public class ArticleRepository {
+public interface ArticleRepository extends JpaRepository<Article,Integer> {
 
+
+    /*
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -109,4 +112,5 @@ public class ArticleRepository {
         User user=this.entityManager.find(User.class, id);
         this.entityManager.remove(user);
     }
+    */
 }
