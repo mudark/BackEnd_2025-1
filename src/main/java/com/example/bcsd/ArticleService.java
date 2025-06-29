@@ -1,5 +1,6 @@
 package com.example.bcsd;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -9,7 +10,6 @@ import org.springframework.web.servlet.ModelAndView;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ArticleService {
@@ -178,6 +178,22 @@ public class ArticleService {
         this.boardRepository.save(
                 new Board(Integer.parseInt(id), boardDTO.getName()));
         return HttpStatus.OK;
+    }
+
+    @Transactional
+    public Integer login(LoginRequestDTO loginRequestDTO) {
+        String message = "아이디 또는 비밀번호가 잘못되었습니다.";
+        Integer id = Integer.parseInt(loginRequestDTO.getId());
+        User user = this.userRepository
+                .findById(id)
+                .orElseThrow(() -> new CustomException(
+                        HttpStatus.NOT_FOUND,
+                        message
+                ));
+        if (user.getPassword().equals(loginRequestDTO.getPassword()) == false) {
+            throw new CustomException(HttpStatus.NOT_FOUND, message);
+        }
+        return user.getId();
     }
 
     private Article turnToArticle(
