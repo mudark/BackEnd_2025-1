@@ -1,5 +1,6 @@
 package com.example.bcsd;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,8 +125,9 @@ public class ArticleController {
     @PostMapping("/login/{id}")
     public ResponseEntity signUp(@PathVariable("id") String id_str,
                                  @Valid @RequestBody UserRequestDTO userRequestDTO,
-                                 HttpSession httpSession)
+                                 HttpServletRequest httpServletRequest)
     {
+        HttpSession httpSession=httpServletRequest.getSession();
         this.canLogin(httpSession);
         this.articleService.postUser(id_str,userRequestDTO);
         httpSession.setAttribute("login",Integer.parseInt(id_str));
@@ -134,8 +136,9 @@ public class ArticleController {
 
     @GetMapping("/login")
     public ResponseEntity login(@Valid @RequestBody LoginRequestDTO loginRequestDTO,
-                                HttpSession httpSession)
+                                HttpServletRequest httpServletRequest)
     {
+        HttpSession httpSession=httpServletRequest.getSession();
         this.canLogin(httpSession);
         Integer id=this.articleService.login(loginRequestDTO);
         httpSession.setAttribute("login",id);
@@ -143,8 +146,9 @@ public class ArticleController {
     }
 
     @GetMapping("/logout")
-    public ResponseEntity logout(HttpSession httpSession)
+    public ResponseEntity logout(HttpServletRequest httpServletRequest)
     {
+        HttpSession httpSession=httpServletRequest.getSession();
         if(!this.existSession(httpSession)){
             throw new CustomException(
                     HttpStatus.BAD_REQUEST,
